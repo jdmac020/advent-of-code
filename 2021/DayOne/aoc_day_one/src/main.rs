@@ -1,32 +1,37 @@
+use itertools::izip;
+
 mod data;
 
 fn main() {
     println!("Checking sonar pings... \n...\n...\n...\n");
     let readings = data::get_sonar_readings();
-    let readings_count = readings.iter().count();
-    let increases = check_vector_via_zip(readings);
-    println!("\tNumber of readings: {}", readings_count);
-    println!("\tNumber of increases: {}", increases);
+    println!("\tNumber of readings: {}", readings.iter().count());
+    println!("\tNumber of fuzzy increases: {}", get_depth_increases(readings.clone()));
+    println!("\tNumber of Precision Three increases: {}", get_depth_increase_with_precision(readings.clone()));
 }
 
 fn check_increase(first: &i32, second: &i32) -> bool {
     return first < second;
 }
 
-fn check_vector_via_zip(numbers: Vec<i32>) -> usize {
+fn get_depth_increases(numbers: Vec<i32>) -> usize {
     let output = numbers.iter().zip(numbers.iter().skip(1)).filter(|cur| check_increase(cur.0,cur.1));
     return output.count();
 }
 
-fn check_vector_via_window(numbers: Vec<i32>) -> usize {
-    let items = numbers.windows(2).filter(|w| check_increase(&w[0], &w[1])).count();
-    return items;
+fn get_depth_increase_with_precision(readings: Vec<i32>) -> usize {
+    let mut sums = Vec::<i32>::new();
+
+    for (first, second, third) in izip!(readings.iter(), readings.iter().skip(1), readings.iter().skip(2)) {
+        sums.push(first + second + third);
+    };
+
+    return get_depth_increases(sums);
 }
 
-fn bump_vec(numbers: Vec<i32>) -> Vec<i32> {
-    let mut result = numbers.clone();
-    result.insert(0,0);
-    return result;
+fn check_vector_via_window(numbers: Vec<i32>, window_size: usize) -> usize {
+    let items = numbers.windows(window_size).filter(|w| check_increase(&w[0], &w[1])).count();
+    return items;
 }
 
 #[cfg(test)]
@@ -46,31 +51,30 @@ mod tests {
     #[test]
     fn returns_three_zip() {
         let numbers = vec![1,2,1,2,3];
-        assert_eq!(3, check_vector_via_zip(numbers));
+        assert_eq!(3, get_depth_increases(numbers));
     }
 
     #[test]
-    fn returns_three_window() {
+    fn returns_three_window_size_2() {
         let numbers = vec![1,2,1,2,3];
-        assert_eq!(3, check_vector_via_window(numbers));
+        assert_eq!(3, check_vector_via_window(numbers, 2));
     }
 
-    #[test]
-    fn bump_adds_zero() {
-        let numbers = vec![1,2,1,2,3];
-        assert_eq!(vec![0,1,2,1,2,3], bump_vec(numbers));
-    }
-    
     #[test]
     fn returns_seven_zip() {
         let numbers = vec![199,200,208,210,200,207,240,269,260,263];
-        assert_eq!(7, check_vector_via_zip(numbers));
+        assert_eq!(7, get_depth_increases(numbers));
     }
 
-    
     #[test]
-    fn returns_seven_window() {
+    fn returns_seven_window_size_2() {
         let numbers = vec![199,200,208,210,200,207,240,269,260,263];
-        assert_eq!(7, check_vector_via_window(numbers));
+        assert_eq!(7, check_vector_via_window(numbers, 2));
+    }
+
+    #[test]
+    fn zip_three_vecs() {
+        let numbers = vec![199,200,208,210,200,207,240,269,260,263];
+        assert_eq!(5, get_depth_increase_with_precision(numbers));
     }
 }
