@@ -1,4 +1,5 @@
 mod sonar;
+mod navigation;
 mod data;
 
 fn main() {
