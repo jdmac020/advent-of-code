@@ -5,6 +5,7 @@ mod data;
 fn main() {
     board_ship();
     map_depth_chart();
+    println!("Final position is: {}", navigation::calculate_end_position(data::get_nav_route()))
 }
 
 fn board_ship() {
